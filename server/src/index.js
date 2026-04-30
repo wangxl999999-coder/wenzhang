@@ -50,21 +50,34 @@ app.use('*', (req, res) => {
 
 const startServer = async () => {
   try {
+    console.log('正在连接数据库...');
     await connectDB();
+    console.log('数据库连接成功');
     
     app.listen(PORT, () => {
       console.log(`服务器运行在端口 ${PORT}`);
       console.log(`API 地址: http://localhost:${PORT}/api`);
+      console.log(`健康检查: http://localhost:${PORT}/api/health`);
     });
 
-    startScheduler();
+    try {
+      startScheduler();
+      console.log('定时任务调度器已启动');
+    } catch (schedulerError) {
+      console.warn('定时任务启动失败，但服务将继续运行:', schedulerError.message);
+    }
 
-    console.log('执行初始数据抓取...');
-    await runManualCrawl();
-    console.log('初始数据抓取完成');
+    try {
+      console.log('执行初始数据抓取...');
+      await runManualCrawl();
+      console.log('初始数据抓取完成');
+    } catch (crawlError) {
+      console.warn('初始数据抓取失败，但服务将继续运行:', crawlError.message);
+    }
 
   } catch (error) {
     console.error('服务器启动失败:', error.message);
+    console.log('错误详情:', error);
     process.exit(1);
   }
 };
